@@ -1,0 +1,38 @@
+import { Router } from 'express';
+import { celebrate, Segments, Joi } from 'celebrate';
+import multer from 'multer';
+
+import uploadConfig from '@config/upload';
+
+import UsersController from '@modules/users/infra/http/controllers/UsersController';
+import UserAvatarController from '@modules/users/infra/http/controllers/UserAvatarController';
+
+import ensureAuthenticated from '../middlewares/ensureAuthenticated';
+
+const usersRouter = Router();
+const upload = multer(uploadConfig);
+const usersController = new UsersController();
+const userAvatarController = new UserAvatarController();
+
+usersRouter.post(
+  '/',
+  celebrate({
+    [Segments.BODY]: {
+      name: Joi.string().required(),
+      email: Joi.string().email().required(),
+      password: Joi.string().required(),
+    },
+  }),
+  usersController.create,
+);
+
+// para atualizar uma única informação do usuário, utilizamos .patch()
+// para atualizar um conjunto de informações, utilizamos .put()
+usersRouter.patch(
+  '/avatar',
+  ensureAuthenticated,
+  upload.single('avatar'), // esse campo 'avatar' é o campo que deve ser enviado para no insomnia
+  userAvatarController.update,
+);
+
+export default usersRouter;
